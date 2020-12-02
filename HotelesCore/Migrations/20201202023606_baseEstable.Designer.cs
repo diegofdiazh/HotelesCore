@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VuelosCore.Data;
 
 namespace HotelesCore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201202023606_baseEstable")]
+    partial class baseEstable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,7 +48,7 @@ namespace HotelesCore.Migrations
                     b.ToTable("Aeropuertos");
                 });
 
-            modelBuilder.Entity("HotelesCore.Data.Entities.ReservaHoteles", b =>
+            modelBuilder.Entity("HotelesCore.Data.Entities.ReservaVuelo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -56,7 +58,7 @@ namespace HotelesCore.Migrations
                     b.Property<string>("Apellido")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CodigoHotel")
+                    b.Property<string>("CodigoVuelo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
@@ -67,7 +69,7 @@ namespace HotelesCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ReservaHoteles");
+                    b.ToTable("ReservaVuelos");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

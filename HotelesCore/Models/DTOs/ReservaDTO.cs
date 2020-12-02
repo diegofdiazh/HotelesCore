@@ -9,6 +9,10 @@ namespace HotelesCore.Models.DTOs
     public class ReservaDTO
     {
         [Required]
+        public string Uuid { get; set; }
+        [Required]
+        public string NombreProveedor { get; set; }
+        [Required]
         public string CodigoHotel { get; set; }
         [Required]
         public string Nombre { get; set; }

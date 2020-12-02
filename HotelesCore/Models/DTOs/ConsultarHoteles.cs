@@ -9,19 +9,15 @@ namespace HotelesCore.Models.DTOs
     public class ConsultarHoteles
     {
         [Required]
+        public string Uuid { get; set; }
+        [Required]
         [DataType(DataType.Date)]
         public string FechaInicio { get; set; }
         [Required]
         [DataType(DataType.Date)]
-        public string FechaFinal { get; set; }
+        public string FechaFinal { get; set; }     
         [Required]
-        public string Pais { get; set; }
-        [Required]
-        public string Ciudad { get; set; }
-        [Required]
-        public int CantidadHabitaciones { get; set; }
-        [Required]
-        public string TipoHabitacion { get; set; }
+        public string CiudadDestino { get; set; }      
     }
      
 }

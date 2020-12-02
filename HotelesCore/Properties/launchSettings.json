@@ -12,7 +12,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "api/v1/Hoteles/Healty",
+      "launchUrl": "api/v1/Hoteles/Healty10",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HotelesCore.Data.Entities
 {
-    public class ReservaHotel
+    public class ReservaHoteles
     {
         public int Id { get; set; }
         public string CodigoHotel { get; set; }
