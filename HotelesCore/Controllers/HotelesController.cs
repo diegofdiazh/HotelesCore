@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutheticationLibrary;
 using Confluent.Kafka;
@@ -13,6 +14,7 @@ using HotelesCore.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
@@ -184,26 +186,31 @@ namespace HotelesCore.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("ConsultarHotelesUiid")]
         [EnableCors("AllowAll")]
-        public IActionResult ConsultarHotelesUiid(string uuid)
+        public IActionResult ConsultarHotelesUiid([FromBody] ReservaConsultaHotelDTO model)
         {
             try
             {
-                if (string.IsNullOrEmpty(uuid))
+                if (string.IsNullOrEmpty(model.Uuid))
                 {
                     return BadRequest();
                 }
                 else
                 {
                     ServidorCache servidorCache = new ServidorCache(_loggercache);
-                    var vuelos = servidorCache.getCache(uuid + "_HOTEL" + "_CATALOG");
+                    var vuelos = servidorCache.getCache(model.Uuid + "_HOTEL" + "_CATALOG");
 
                     if (vuelos != null)
                     {
                         Random r = new Random();
                         string[] Descripciones = new string[10];
+                        Descripciones[1] = "Hotel con vista al mar perfecto para viaje de placer";
+                        Descripciones[2] = "Hotel en la montaña para alejarse de la monotonia y conectarse con la naturaleza";
+                        Descripciones[3] = "Hotel perfecto para viajes de negocio";
+                        Descripciones[4] = "Hotel para la familia con actividadades ludicas para cualquier edad";
+                        Descripciones[5] = "Hotel todo terreno, descanso, trabajo lo que quieras ven pero ya!";                        
                         Logger.LogInformation("Se obtiene respuesta de normalizador :" + vuelos);
                         Logger.LogInformation($"Contiene {vuelos.providersResponse.Count} proveedores la respuesta");
                         if (vuelos.providersResponse.Count > 0)
@@ -212,33 +219,34 @@ namespace HotelesCore.Controllers
                             foreach (var item in vuelos.providersResponse)
                             {
                                 Logger.LogInformation($"proveedor {item}");
-                                if (!string.IsNullOrEmpty(item.code) && !string.IsNullOrEmpty(item.destination) && !string.IsNullOrEmpty(item.origin) && !string.IsNullOrEmpty(item.startDate) && !string.IsNullOrEmpty(item.endDate) && !string.IsNullOrEmpty(item.price) && !string.IsNullOrEmpty(item.providerName))
+                                if (!string.IsNullOrEmpty(item.code) && !string.IsNullOrEmpty(item.destination) && !string.IsNullOrEmpty(item.hotelname) && !string.IsNullOrEmpty(item.price) && !string.IsNullOrEmpty(item.providerName) && !string.IsNullOrEmpty(item.roomType))
                                 {
                                     Logger.LogInformation($"proveedor valido");
-                                    Logger.LogInformation($"Ciudad origen {item.origin}");
+                                    Logger.LogInformation($"Pais origen {"Colombia"}");
                                     Logger.LogInformation($"Ciudad destino {item.destination}");
-                                    var origen = _db.Aeropuertos.FirstOrDefault(c => c.Lata == item.origin);
                                     var destino = _db.Aeropuertos.FirstOrDefault(c => c.Lata == item.destination);
-                                    if (origen != null && destino != null)
+                                    if (destino != null)
                                     {
-                                        DateTime stardate = DateTime.Parse(item.startDate);
+                                        DateTime stardate = DateTime.Parse(model.FechaInicio);
+                                        DateTime endDate = DateTime.Parse(model.FechaFinal);
                                         Logger.LogInformation($"origen y destino validos");
                                         responseVuelos.Add(new ResponseBaseHoteles
                                         {
                                             City = destino.CiudadUbicacin,
                                             Description = Descripciones[r.Next(1, 10)],
                                             HotelCode = item.code,
-                                            HotelImage = $"hotel{r.Next(1, 10)}​​​​​.jfif",
-                                            Stardate = DateTime.Parse(item.startDate),
-                                            EndDate = DateTime.Parse(item.endDate),
+                                            HotelImage = $"hotel{r.Next(1, 5)}​​​​​",
+                                            Stardate = stardate,
+                                            EndDate = endDate,
                                             Price = item.price,
-                                            Supplier = item.providerName
+                                            Supplier = item.providerName,
+                                            HotelName = item.hotelname
                                         });
                                         Logger.LogInformation($"proveedor agregado correctamente");
                                     }
                                     else
                                     {
-                                        Logger.LogInformation($"origen y destino invalidos");
+                                        Logger.LogInformation($"origen invalido");
                                     }
                                 }
                                 else
@@ -258,7 +266,6 @@ namespace HotelesCore.Controllers
                         return NotFound("No se encontro informacion con este Uuid");
                     }
 
-
                 }
 
             }
@@ -273,10 +280,25 @@ namespace HotelesCore.Controllers
         [HttpGet]
         [Route("ConsultarReservaUiid")]
         [EnableCors("AllowAll")]
-        public IActionResult ConsultarReservaUiid(string uuid)
+        public IActionResult ConsultarReservaUiid(string uuid, string nombre, string apellido, string codigoHotel)
         {
             try
             {
+                Logger.LogInformation("INICIA PROCESO DE RESERVA DE VUELO");
+                JwtProvider jwt = new JwtProvider("TouresBalon.com", "UsuariosPlataforma");
+                var accessToken = Request.Headers[HeaderNames.Authorization];
+                var first = accessToken.FirstOrDefault();
+                if (string.IsNullOrEmpty(accessToken) || !first.Contains("Bearer"))
+                {
+                    return BadRequest();
+                }
+                string token = first.Replace("Bearer", "").Trim();
+                Logger.LogInformation("INICIA PROCESO DE VALIDACION DE TOKEN :" + token);
+                var a = jwt.ValidateToken(token);
+                if (!a)
+                {
+                    return Unauthorized();
+                }
                 if (string.IsNullOrEmpty(uuid))
                 {
                     return BadRequest();
@@ -292,16 +314,30 @@ namespace HotelesCore.Controllers
                         Logger.LogInformation($"Contiene {vuelos.providersResponse.Count} proveedores la respuesta");
                         if (vuelos.providersResponse.Count > 0)
                         {
+
+                            Random r = new Random();
+                            var x = r.Next(0, 1000000);
+                            string s = x.ToString("000000");
                             List<ResponseBaseHotelesReserva> responseVuelos = new List<ResponseBaseHotelesReserva>();
                             foreach (var item in vuelos.providersResponse)
                             {
                                 Logger.LogInformation($"proveedor {item}");
                                 responseVuelos.Add(new ResponseBaseHotelesReserva
                                 {
-                                    Status = item.status
+                                    Estado=true,
+                                    CodigoReservaVuelo=s
                                 });
                                 Logger.LogInformation($"proveedor agregado correctamente");
                             }
+                            _db.ReservaHoteles.Add(new ReservaHoteles
+                            {
+                                Apellido = apellido,
+                                CodigoReserva = s,
+                                CodigoHotel = codigoHotel,
+                                Nombre = nombre,
+                                Token = token
+                            });
+                            _db.SaveChanges();
                             return Ok(responseVuelos);
                         }
                         else
@@ -329,6 +365,7 @@ namespace HotelesCore.Controllers
         [Route("Healty")]
         public IActionResult Healty()
         {
+
             return Ok("Todo Bien");
         }
     }

@@ -44,6 +44,8 @@ namespace HotelesCore.Services
                 try
                 {
                     var cr = this._kafkaConsumer.Consume(cancellationToken);
+
+                   
                     _logger.LogInformation("Se obtiene respuesta de normalizador :" + cr.Message.Value);
                     JObject jResults = JObject.Parse(cr.Message.Value);
                     if (jResults.Count == 4)
@@ -51,21 +53,26 @@ namespace HotelesCore.Services
                         var jitem = jResults.Children<JProperty>().FirstOrDefault(x => x.Name == "providerType");
                         if (jitem.Value.ToString() == "HOTEL")
                         {
+                            _logger.LogInformation("Mensaje correspende a hoteles:" + cr.Message.Value);
                             var jitemType = jResults.Children<JProperty>().FirstOrDefault(x => x.Name == "processType");
                             if (jitemType.Value.ToString() == "CATALOG")
                             {
                                 var vuelos = JsonConvert.DeserializeObject<Root>(cr.Message.Value);
                                 ServidorCache servidorCache = new ServidorCache(_loggercache);
                                 servidorCache.setCache(cr.Message.Value, vuelos.uuid + "_" + vuelos.providerType + "_" + vuelos.processType);
+                                this._kafkaConsumer.StoreOffset(cr);
+                                _logger.LogInformation("Mensaje comitiado");
                             }
                             else if (jitemType.Value.ToString() == "RESERVE")
                             {
                                 var vuelos = JsonConvert.DeserializeObject<Root1>(cr.Message.Value);
                                 ServidorCache servidorCache = new ServidorCache(_loggercache);
                                 servidorCache.setCache(cr.Message.Value, vuelos.uuid + "_" + vuelos.providerType + "_" + vuelos.processType);
+                                this._kafkaConsumer.StoreOffset(cr);
+                                _logger.LogInformation("Mensaje comitiado");
                             }
-
                         }
+                        _logger.LogInformation("Mensaje no corresponde a hoteles:" + cr.Message.Value);
                     }
                 }
                 catch (OperationCanceledException)

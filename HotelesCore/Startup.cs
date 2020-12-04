@@ -44,6 +44,8 @@ namespace HotelesCore
             services.AddControllers();
             var producerConfig = new ProducerConfig();
             var consumerConfig = new ConsumerConfig();
+            consumerConfig.EnableAutoCommit = false;
+            consumerConfig.EnableAutoOffsetStore = false;
             Configuration.Bind("Producer", producerConfig);
             Configuration.Bind("Consumer", consumerConfig);
 

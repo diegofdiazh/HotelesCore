@@ -12,5 +12,6 @@ namespace HotelesCore.Data.Entities
         public string Nombre { get; set; }
         public string Apellido { get; set; }
         public string Token { get; set; }
+        public string CodigoReserva { get; set; }
     }
 }
